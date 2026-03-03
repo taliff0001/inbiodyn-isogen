@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --brand-green: #6B9E3C;
+  --brand-teal: #2A7B88;
+}
+
+body {
+  background: #12141a;
+  color: #e4e6eb;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #1a1d23;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2d36;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3d46;
+}
+
+/* Smooth transitions for interactive elements */
+button, input, select, textarea {
+  transition: all 0.15s ease;
+}
+
+/* Pulse animation for processing state */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(107, 158, 60, 0.3); }
+  50% { box-shadow: 0 0 12px 4px rgba(107, 158, 60, 0.15); }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Checkerboard pattern for transparent preview */
+.checkerboard {
+  background-image:
+    linear-gradient(45deg, #2a2d36 25%, transparent 25%),
+    linear-gradient(-45deg, #2a2d36 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #2a2d36 75%),
+    linear-gradient(-45deg, transparent 75%, #2a2d36 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+}
