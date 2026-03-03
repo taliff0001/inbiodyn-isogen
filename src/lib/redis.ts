@@ -9,8 +9,9 @@ let redis: Redis | null = null;
 export function getRedis(): Redis | null {
   if (redis) return redis;
 
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  // Support both Vercel KV integration names and standard Upstash names
+  const url = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
 
   if (!url || !token) return null;
 
