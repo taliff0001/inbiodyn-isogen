@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRedis } from "@/lib/redis";
+import { verifyPassphrase } from "@/lib/auth";
 
 /**
  * POST /api/save-custom-suggestion
@@ -8,6 +9,9 @@ import { getRedis } from "@/lib/redis";
  * These persist across sessions and appear alongside AI suggestions.
  */
 export async function POST(req: NextRequest) {
+  const authError = verifyPassphrase(req);
+  if (authError) return authError;
+
   try {
     const { weight, description } = await req.json();
     if (!weight || !description) {

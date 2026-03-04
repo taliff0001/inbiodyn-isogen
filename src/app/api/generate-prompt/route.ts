@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyPassphrase } from "@/lib/auth";
 
 /**
  * POST /api/generate-prompt
@@ -9,12 +10,15 @@ import { NextRequest, NextResponse } from "next/server";
  * Accepts optional `feedback` for regeneration with remixed prompt.
  */
 export async function POST(req: NextRequest) {
+  const authError = verifyPassphrase(req);
+  if (authError) return authError;
+
   try {
     const { weight, description, feedback, previousPrompt } = await req.json();
-    const apiKey = req.headers.get("x-anthropic-key");
+    const apiKey = process.env.ANTHROPIC_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json({ error: "Missing Anthropic API key" }, { status: 401 });
+      return NextResponse.json({ error: "Anthropic API key not configured on server" }, { status: 500 });
     }
 
     if (!weight || !description) {

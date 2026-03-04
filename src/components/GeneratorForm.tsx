@@ -8,7 +8,8 @@ import type { CropMode } from "@/lib/types";
 interface GeneratorFormProps {
   onGenerate: (items: BatchItem[]) => void;
   isProcessing: boolean;
-  anthropicKey: string;
+  authenticated: boolean;
+  passphrase: string;
   cropMode: CropMode;
   onCropModeChange: (mode: CropMode) => void;
 }
@@ -16,7 +17,8 @@ interface GeneratorFormProps {
 export default function GeneratorForm({
   onGenerate,
   isProcessing,
-  anthropicKey,
+  authenticated,
+  passphrase,
   cropMode,
   onCropModeChange,
 }: GeneratorFormProps) {
@@ -34,10 +36,8 @@ export default function GeneratorForm({
   // Cache suggestions per weight class to avoid redundant fetches within a session
   const suggestionsCache = useRef<Record<number, { ai: string[]; custom: string[] }>>({});
 
-  const keyReady = anthropicKey.length > 10;
-
   useEffect(() => {
-    if (!keyReady) return;
+    if (!authenticated) return;
 
     // Check cache first
     if (suggestionsCache.current[weight]) {
@@ -55,7 +55,7 @@ export default function GeneratorForm({
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-anthropic-key": anthropicKey,
+        "x-app-passphrase": passphrase,
       },
       body: JSON.stringify({ weight }),
     })
@@ -78,7 +78,7 @@ export default function GeneratorForm({
     return () => {
       cancelled = true;
     };
-  }, [weight, keyReady, anthropicKey]);
+  }, [weight, authenticated, passphrase]);
 
   const saveCustomSuggestion = async () => {
     const trimmed = customInput.trim();
@@ -101,7 +101,10 @@ export default function GeneratorForm({
     try {
       await fetch("/api/save-custom-suggestion", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-app-passphrase": passphrase,
+        },
         body: JSON.stringify({ weight, description: trimmed }),
       });
     } catch {
@@ -145,7 +148,7 @@ export default function GeneratorForm({
   };
 
   const allSuggestions = [...aiSuggestions, ...customSuggestions];
-  const showSuggestions = keyReady && (isSuggesting || allSuggestions.length > 0);
+  const showSuggestions = authenticated && (isSuggesting || allSuggestions.length > 0);
 
   return (
     <div className="bg-brand-card border border-brand-border rounded-xl p-5">

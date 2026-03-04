@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyPassphrase } from "@/lib/auth";
 
 /**
  * POST /api/generate-image
@@ -7,12 +8,15 @@ import { NextRequest, NextResponse } from "next/server";
  * Returns the image as a base64 data URL.
  */
 export async function POST(req: NextRequest) {
+  const authError = verifyPassphrase(req);
+  if (authError) return authError;
+
   try {
     const { prompt } = await req.json();
-    const apiKey = req.headers.get("x-google-key");
+    const apiKey = process.env.GOOGLE_AI_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json({ error: "Missing Google AI API key" }, { status: 401 });
+      return NextResponse.json({ error: "Google AI API key not configured on server" }, { status: 500 });
     }
 
     if (!prompt) {

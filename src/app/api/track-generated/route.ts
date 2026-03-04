@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRedis } from "@/lib/redis";
+import { verifyPassphrase } from "@/lib/auth";
 
 /**
  * POST /api/track-generated
@@ -8,6 +9,9 @@ import { getRedis } from "@/lib/redis";
  * Called client-side after generation completes.
  */
 export async function POST(req: NextRequest) {
+  const authError = verifyPassphrase(req);
+  if (authError) return authError;
+
   try {
     const { weight, description } = await req.json();
     if (!weight || !description) {

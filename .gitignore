@@ -7,3 +7,5 @@ out/
 next-env.d.ts
 inbiodyn-isogen_isometric-image-generator/
 .DS_Store
+.vercel
+.env*.local

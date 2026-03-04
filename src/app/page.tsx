@@ -2,46 +2,50 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Header from "@/components/Header";
-import ApiKeyModal from "@/components/ApiKeyModal";
+import PassphraseModal from "@/components/ApiKeyModal";
 import GeneratorForm from "@/components/GeneratorForm";
 import ImageGallery from "@/components/ImageGallery";
 import { generateFilename } from "@/lib/naming";
 import { cropToCanvas } from "@/lib/imageCrop";
-import type { ApiKeys, BatchItem, CropMode, GeneratedImage } from "@/lib/types";
+import type { BatchItem, CropMode, GeneratedImage } from "@/lib/types";
 
 export default function Home() {
-  const [apiKeys, setApiKeys] = useState<ApiKeys>({ anthropic: "", google: "" });
-  const [showKeyModal, setShowKeyModal] = useState(false);
+  const [passphrase, setPassphrase] = useState("");
+  const [showPassphraseModal, setShowPassphraseModal] = useState(false);
   const [isFirstTime, setIsFirstTime] = useState(true);
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [cropMode, setCropMode] = useState<CropMode>("natural");
   const processingRef = useRef(false);
 
-  // Check for stored keys on mount
+  const authenticated = passphrase.length > 0;
+
+  // Auth headers for all API calls
+  const authHeaders = useCallback(
+    (): Record<string, string> => ({
+      "Content-Type": "application/json",
+      "x-app-passphrase": passphrase,
+    }),
+    [passphrase]
+  );
+
+  // Check for stored passphrase on mount
   useEffect(() => {
-    const stored = sessionStorage.getItem("isoforge_keys");
+    const stored = sessionStorage.getItem("isoforge_passphrase");
     if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setApiKeys(parsed);
-        setIsFirstTime(false);
-      } catch {
-        setShowKeyModal(true);
-      }
+      setPassphrase(stored);
+      setIsFirstTime(false);
     } else {
-      setShowKeyModal(true);
+      setShowPassphraseModal(true);
     }
   }, []);
 
-  const saveKeys = (keys: ApiKeys) => {
-    setApiKeys(keys);
-    sessionStorage.setItem("isoforge_keys", JSON.stringify(keys));
+  const handleVerified = (verifiedPassphrase: string) => {
+    setPassphrase(verifiedPassphrase);
+    sessionStorage.setItem("isoforge_passphrase", verifiedPassphrase);
     setIsFirstTime(false);
-    setShowKeyModal(false);
+    setShowPassphraseModal(false);
   };
-
-  const keysConfigured = apiKeys.anthropic.length > 10 && apiKeys.google.length > 10;
 
   // Update a specific image in state
   const updateImage = useCallback((id: string, updates: Partial<GeneratedImage>) => {
@@ -75,10 +79,7 @@ export default function Home() {
         // Step 1: Generate prompt via Claude
         const promptRes = await fetch("/api/generate-prompt", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-anthropic-key": apiKeys.anthropic,
-          },
+          headers: authHeaders(),
           body: JSON.stringify({
             weight: item.weight,
             description: item.description,
@@ -96,10 +97,7 @@ export default function Home() {
         // Step 2: Generate image via Imagen 4 Ultra
         const imageRes = await fetch("/api/generate-image", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-google-key": apiKeys.google,
-          },
+          headers: authHeaders(),
           body: JSON.stringify({ prompt }),
         });
 
@@ -123,7 +121,6 @@ export default function Home() {
           const resultBlob = await removeBackground(blob, {
             output: { format: "image/png" },
           });
-          const transparentUrl = URL.createObjectURL(resultBlob);
 
           // Convert blob URL to data URL for download
           const reader = new FileReader();
@@ -148,7 +145,7 @@ export default function Home() {
         // Track generated item for suggestion freshness (fire-and-forget)
         fetch("/api/track-generated", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeaders(),
           body: JSON.stringify({ weight: item.weight, description: item.description }),
         }).catch(() => {});
       } catch (error) {
@@ -159,7 +156,7 @@ export default function Home() {
         });
       }
     },
-    [apiKeys, updateImage, cropMode]
+    [authHeaders, updateImage, cropMode]
   );
 
   // Handle batch generation (processes in series)
@@ -202,10 +199,7 @@ export default function Home() {
         // Step 1: Remix prompt via Claude (with feedback)
         const promptRes = await fetch("/api/generate-prompt", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-anthropic-key": apiKeys.anthropic,
-          },
+          headers: authHeaders(),
           body: JSON.stringify({
             weight: image.weight,
             description: image.description,
@@ -225,10 +219,7 @@ export default function Home() {
         // Step 2: Generate
         const imageRes = await fetch("/api/generate-image", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-google-key": apiKeys.google,
-          },
+          headers: authHeaders(),
           body: JSON.stringify({ prompt }),
         });
 
@@ -265,7 +256,7 @@ export default function Home() {
         });
       }
     },
-    [apiKeys, updateImage, cropMode]
+    [authHeaders, updateImage, cropMode]
   );
 
   // Manual background removal trigger
@@ -298,15 +289,14 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header
-        onSettingsClick={() => setShowKeyModal(true)}
-        keysConfigured={keysConfigured}
+        onSettingsClick={() => setShowPassphraseModal(true)}
+        keysConfigured={authenticated}
       />
 
-      <ApiKeyModal
-        isOpen={showKeyModal}
-        onClose={() => setShowKeyModal(false)}
-        onSave={saveKeys}
-        initialKeys={apiKeys}
+      <PassphraseModal
+        isOpen={showPassphraseModal}
+        onClose={() => setShowPassphraseModal(false)}
+        onVerified={handleVerified}
         isFirstTime={isFirstTime}
       />
 
@@ -322,12 +312,13 @@ export default function Home() {
           {/* Left: Generator form */}
           <div className="space-y-4">
             <GeneratorForm
-            onGenerate={handleGenerate}
-            isProcessing={isProcessing}
-            anthropicKey={apiKeys.anthropic}
-            cropMode={cropMode}
-            onCropModeChange={setCropMode}
-          />
+              onGenerate={handleGenerate}
+              isProcessing={isProcessing}
+              authenticated={authenticated}
+              passphrase={passphrase}
+              cropMode={cropMode}
+              onCropModeChange={setCropMode}
+            />
 
             {/* Stats card */}
             {images.length > 0 && (

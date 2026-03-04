@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRedis } from "@/lib/redis";
+import { verifyPassphrase } from "@/lib/auth";
 
 /**
  * POST /api/suggest-items
@@ -9,12 +10,15 @@ import { getRedis } from "@/lib/redis";
  * to ensure freshness and visual proportion coherence across the asset set.
  */
 export async function POST(req: NextRequest) {
+  const authError = verifyPassphrase(req);
+  if (authError) return authError;
+
   try {
     const { weight } = await req.json();
-    const apiKey = req.headers.get("x-anthropic-key");
+    const apiKey = process.env.ANTHROPIC_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json({ error: "Missing Anthropic API key" }, { status: 401 });
+      return NextResponse.json({ error: "Anthropic API key not configured on server" }, { status: 500 });
     }
     if (!weight) {
       return NextResponse.json({ error: "Weight is required" }, { status: 400 });
