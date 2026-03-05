@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Not configured" }, { status: 500 });
     }
 
-    return NextResponse.json({ valid: passphrase === expected });
+    return NextResponse.json({ valid: passphrase === expected.trim() });
   } catch {
     return NextResponse.json({ valid: false });
   }

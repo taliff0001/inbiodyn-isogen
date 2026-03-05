@@ -15,7 +15,7 @@ export function verifyPassphrase(req: NextRequest): NextResponse | null {
     );
   }
 
-  if (!passphrase || passphrase !== expected) {
+  if (!passphrase || passphrase !== expected.trim()) {
     return NextResponse.json(
       { error: "Invalid passphrase" },
       { status: 401 }
