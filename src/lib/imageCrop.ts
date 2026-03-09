@@ -5,13 +5,13 @@
  * @param mode     - "square": output is always 1024×1024
  *                   "natural": output is 1024px wide, height scales to preserve proportions
  * @param canvasWidth  - Output width in pixels (default 1024)
- * @param paddingPct   - Fractional padding added on each side (default 0.05 = 5%)
+ * @param paddingPct   - Fractional padding added on each side (default 0 = pixel-tight)
  */
 export async function cropToCanvas(
   dataUrl: string,
   mode: "square" | "natural" = "square",
   canvasWidth = 1024,
-  paddingPct = 0.05
+  paddingPct = 0
 ): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
