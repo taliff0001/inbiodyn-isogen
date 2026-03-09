@@ -56,22 +56,38 @@ export async function POST(req: NextRequest) {
     const alreadyGeneratedAtWeight = existingByWeight[weight] ?? [];
     const allExcluded = [...alreadyGeneratedAtWeight, ...custom];
 
-    const systemPrompt = `You are an expert in warehouse safety training content for the InBioDyn Lift Training System. You suggest everyday objects for isometric cartoon illustrations used in a stacking animation — objects fall from the sky and stack on top of each other.
+   const systemPrompt = `You are a creative director for an isometric animation studio specializing in warehouse safety training. Your job is to suggest objects for isometric cartoon illustrations where items fall from the sky and stack on top of each other.
 
-CRITICAL RULES for suggesting objects:
-1. VISUAL SCALE COHERENCE: Only suggest objects whose real-world physical size makes intuitive sense for their weight. A truck is visually enormous even if somehow light — do not suggest it at a low weight. A thimble is visually tiny even if somehow heavy — do not suggest it at a high weight. The object's visual scale should feel right for its weight to someone watching the animation.
-2. PROPORTIONAL COHERENCE WITH THE FULL SET: The full asset set already contains the items listed below. Your suggestions should complement the set visually — if the set already has many box-shaped items, suggest something different (spheres, bags, cylinders, tools). Objects should look proportionally sensible next to each other in the same animation.
-3. FRESHNESS: Never suggest anything already in the generated history or the custom list.
-4. WAREHOUSE CONTEXT: Suggest items a warehouse or retail worker would realistically encounter — practical, recognizable objects.
-5. ISOMETRIC RENDERING: Prefer objects with interesting 3D shape from an isometric angle — avoid flat/thin objects like paper or sheets.`;
+CORE VISUAL RULES (non-negotiable):
+1. VISUAL SCALE COHERENCE: The object's real-world physical size must feel intuitively correct for its weight. A truck looks enormous even if light — don't suggest it at low weights. A thimble looks tiny even if dense — don't suggest it at high weights.
+2. ISOMETRIC RENDERING: Objects must have interesting 3D shape from an isometric top-corner angle. Avoid flat, thin, or featureless objects (paper, sheets, slabs). Favor objects with distinct silhouettes — cylinders, irregular shapes, layered forms, objects with visible components.
+3. PROPORTIONAL COHERENCE: Suggestions should look visually sensible next to the existing asset set in the same animation.
 
-    const userMessage = `Suggest 6 objects for the ${weight} lb weight class.
+CREATIVITY RULES:
+- Start grounded, get progressively weirder and more unexpected as the excluded list grows.
+- When fewer than 10 items are excluded: suggest recognizable everyday objects from ANY context — not just warehouses. Kitchen, garage, office, outdoors, sports, nature — all fair game.
+- When 10-20 items are excluded: push into the unexpected — scientific equipment, cultural artifacts, industrial machinery components, animals, food items, musical instruments, medical equipment.
+- When more than 20 items are excluded: get genuinely creative and surprising — think objects from other countries, historical artifacts, obscure equipment, nature specimens, things that are unexpected but would look AMAZING in isometric style.
+- NEVER suggest generic box shapes, plain containers, or anything visually boring.
+- Surprise the user. The best suggestion is one they wouldn't have thought of but immediately recognize as perfect.`;
 
-FULL ASSET SET ALREADY GENERATED (for proportion awareness):
+const creativityLevel = allExcluded.length < 10 
+  ? "grounded but fresh" 
+  : allExcluded.length < 20 
+  ? "unexpected and interesting" 
+  : "genuinely surprising and creative — push into unusual territory";
+
+const userMessage = `Suggest 6 objects for the ${weight} lb weight class.
+
+CREATIVITY LEVEL FOR THIS REQUEST: ${creativityLevel} (${allExcluded.length} items already exhausted for this weight class)
+
+FULL ASSET SET ALREADY IN THE APP (for proportion and visual variety awareness):
 ${existingSummary || "None yet — this is the first generation."}
 
-ALREADY EXCLUDED (already generated at ${weight} lbs, or saved as custom):
-${allExcluded.length > 0 ? allExcluded.join(", ") : "None"}
+ALREADY EXCLUDED — DO NOT SUGGEST THESE (already used at ${weight} lbs or saved as custom):
+${allExcluded.length > 0 ? allExcluded.join(", ") : "None — this is the first request, start grounded but interesting."}
+
+Think carefully about what would look visually STUNNING in isometric cartoon style at ${weight} lbs. Favor objects with interesting geometry, recognizable silhouettes, and visual personality.
 
 Return ONLY a JSON array of 6 strings, each a short object name (2-4 words max). Example format:
 ["bag of concrete", "hydraulic jack", "toolbox", "watermelon", "car battery", "paint bucket"]
