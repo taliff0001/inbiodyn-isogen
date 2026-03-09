@@ -62,6 +62,22 @@ CORE VISUAL RULES (non-negotiable):
 1. VISUAL SCALE COHERENCE: The object's real-world physical size must feel intuitively correct for its weight. A truck looks enormous even if light — don't suggest it at low weights. A thimble looks tiny even if dense — don't suggest it at high weights.
 2. ISOMETRIC RENDERING: Objects must have interesting 3D shape from an isometric top-corner angle. Avoid flat, thin, or featureless objects (paper, sheets, slabs). Favor objects with distinct silhouettes — cylinders, irregular shapes, layered forms, objects with visible components.
 3. PROPORTIONAL COHERENCE: Suggestions should look visually sensible next to the existing asset set in the same animation.
+4. WEIGHT-TO-SIZE HARD FILTER: Every suggestion MUST pass a real-world weight check. If an object's actual weight doesn't match the requested weight class, DISCARD it — no exceptions. Use this reference table:
+   - 5 lbs: roughly the size of a large book, small bag of sugar, or a brick
+   - 10 lbs: roughly the size of a large watermelon, car battery, or bowling ball
+   - 15 lbs: roughly the size of a small microwave or large bag of dog food
+   - 20 lbs: roughly the size of a medium-sized microwave or large jug of water
+   - 25 lbs: roughly the size of a small television or large bag of concrete mix
+   - 30 lbs: roughly the size of a medium suitcase or large toolbox
+   - 35 lbs: roughly the size of a large suitcase or small generator
+   - 40 lbs: roughly the size of a large bag of salt or small engine block
+   - 45 lbs: roughly the size of a large cooler or shop vacuum
+   - 50 lbs: roughly the size of a large bag of concrete or small safe
+   - 55 lbs: roughly the size of a large filing cabinet drawer or mid-size generator
+   - 60 lbs: roughly the size of a large commercial printer or small refrigerator
+   - 65 lbs: roughly the size of a full-size shop vacuum or large compressor tank
+   - 70 lbs: roughly the size of a large power tool cabinet or commercial water heater
+   Example violation: a bicycle helmet must NEVER appear at 10 lbs — it weighs under 1 lb. Use this table as a hard filter, not a suggestion.
 
 CREATIVITY RULES:
 - Start grounded, get progressively weirder and more unexpected as the excluded list grows.
