@@ -2,9 +2,9 @@
  * Crop a transparent PNG to its content bounding box, then output to a canvas.
  *
  * @param dataUrl  - Source image as a data URL (must have transparency for best results)
- * @param mode     - "square": output is always 1024×1024
- *                   "natural": output is 1024px wide, height scales to preserve proportions
- * @param canvasWidth  - Output width in pixels (default 1024)
+ * @param mode     - "square": output is canvasWidth×canvasWidth (content letterboxed inside)
+ *                   "natural": output is exactly the bounding-box dimensions (no scaling)
+ * @param canvasWidth  - Output size in pixels for square mode (default 1024, ignored in natural mode)
  * @param paddingPct   - Fractional padding added on each side (default 0 = pixel-tight)
  */
 export async function cropToCanvas(
@@ -57,24 +57,25 @@ export async function cropToCanvas(
       const srcH = Math.min(H - srcY, contentH + pad * 2);
 
       // Determine output canvas size
-      const outW = canvasWidth;
+      let outW: number;
       let outH: number;
+      let destX = 0, destY = 0, destW: number, destH: number;
 
       if (mode === "square") {
+        // Square mode: fit content inside canvasWidth × canvasWidth, letterboxed
+        outW = canvasWidth;
         outH = canvasWidth;
-      } else {
-        // Natural mode: preserve aspect ratio, width = canvasWidth
-        outH = Math.round((srcH / srcW) * canvasWidth);
-      }
-
-      // In square mode, fit the cropped region inside the square (letterbox if needed)
-      let destX = 0, destY = 0, destW = outW, destH = outH;
-      if (mode === "square") {
         const scale = Math.min(outW / srcW, outH / srcH);
         destW = Math.round(srcW * scale);
         destH = Math.round(srcH * scale);
         destX = Math.round((outW - destW) / 2);
         destY = Math.round((outH - destH) / 2);
+      } else {
+        // Natural mode: output at native bounding-box resolution (no upscaling)
+        outW = srcW;
+        outH = srcH;
+        destW = srcW;
+        destH = srcH;
       }
 
       const outCanvas = document.createElement("canvas");
